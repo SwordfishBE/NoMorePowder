@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "nomorepowder",
+  "version": "${version}",
+  "name": "NoMorePowder",
+  "description": "Replaces naturally-generating powder snow with regular snow blocks!",
+  "authors": [
+    "SwordfishBE"
+  ],
+  "contact": {
+    "homepage": "https://github.com/SwordfishBE/NoMorePowder",
+    "sources": "https://github.com/SwordfishBE/NoMorePowder",
+    "issues": "https://github.com/SwordfishBE/NoMorePowder/issues"
+  },
+  "license": "AGPL-3.0",
+  "icon": "assets/nomorepowder/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.nomorepowder.NoMorePowder"
+    ]
+  },
+  "mixins": [
+    "nomorepowder.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.10",
+    "minecraft": "~1.21.11",
+    "java": ">=21"
+  }
+}
