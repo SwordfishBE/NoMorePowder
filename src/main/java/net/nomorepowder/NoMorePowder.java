@@ -1,4 +1,4 @@
-package com.nomorepowder;
+package net.nomorepowder;
 
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
@@ -11,7 +11,6 @@ public class NoMorePowder implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        LOGGER.info("[NoMorePowder] Active — naturally-generated powder snow will be replaced with snow blocks via surface rule intercept.");
+        LOGGER.info("[NoMorePowder] Active - naturally-generated powder snow will be replaced with snow blocks via surface rule intercept.");
     }
 }
-

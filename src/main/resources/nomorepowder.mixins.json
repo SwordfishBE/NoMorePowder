@@ -1,7 +1,7 @@
 {
   "required": true,
-  "package": "com.nomorepowder.mixin",
-  "compatibilityLevel": "JAVA_21",
+  "package": "net.nomorepowder.mixin",
+  "compatibilityLevel": "JAVA_25",
   "mixins": [
     "SurfaceRulesStateRuleMixin"
   ],
