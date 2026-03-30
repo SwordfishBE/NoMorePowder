@@ -50,11 +50,13 @@ Your mountain biomes stay snowy and beautiful. You just stop falling through the
 | Modrinth   | [NoMorePowder](https://modrinth.com/mod/nomorepowder) |
 | CurseForge | [NoMorePowder](https://www.curseforge.com/minecraft/mc-mods/nomorepowder) |
 
-1. Download the latest JAR from your preferred platform above.
-2. Place the JAR in your server's `mods/` folder.
-3. Start Minecraft — the config file will be created automatically.
+1. Download the latest `NoMorePowder` JAR from your preferred platform above.
+2. Download the latest compatible `Fabric API` version.
+3. Place both JARs in your server's `mods/` folder.
+4. Start Minecraft.
 
-> **Server note:** This mod modifies world generation. It must be installed **server-side** (or in singleplayer). Players connecting to a modded server do not need to install it themselves.
+> **Dependency note:** `Fabric API` is required.
+> **Server note:** This mod modifies world generation. It must be installed **server-side** (or in singleplayer).
 > **Existing worlds:** Chunks that were already generated before installing this mod will not be retroactively changed. The effect only applies to newly generated chunks.
 
 ---
@@ -62,6 +64,7 @@ Your mountain biomes stay snowy and beautiful. You just stop falling through the
 ## 🛠️ Compatibility
 
 - Java **25+**
+- `Fabric API` required
 - Compatible with other mods - the intercept targets only `SurfaceRules$StateRule.tryApply()` and does not affect feature-based placement or structure generation
 
 ---
