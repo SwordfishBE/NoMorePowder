@@ -6,7 +6,12 @@
 
 ---
 
-## Overview
+[![GitHub Release](https://img.shields.io/github/v/release/SwordfishBE/NoMorePowder?display_name=release&logo=github)](https://github.com/SwordfishBE/NoMorePowder/releases)
+[![GitHub Downloads](https://img.shields.io/github/downloads/SwordfishBE/NoMorePowder/total?logo=github)](https://github.com/SwordfishBE/NoMorePowder/releases)
+[![Modrinth Downloads](https://img.shields.io/modrinth/dt/kPiAZGSa?logo=modrinth&logoColor=white&label=Modrinth%20downloads)](https://modrinth.com/mod/nomorepowder)
+[![CurseForge Downloads](https://img.shields.io/curseforge/dt/1490876?logo=curseforge&logoColor=white&label=CurseForge%20downloads)](https://www.curseforge.com/minecraft/mc-mods/nomorepowder)
+
+## 🧾Overview
 
 You're sprinting across a snowy mountain, the landscape looks solid and safe - and then you sink. Powder snow: invisible, silent, and one of Minecraft's most frustrating terrain hazards. No warning, no indication, just a slow freeze creeping up your health bar.
 
@@ -16,7 +21,7 @@ Your mountain biomes stay snowy and beautiful. You just stop falling through the
 
 ---
 
-## Features
+## ✨ Features
 
 - 🏔️ **Seamless terrain** - Powder snow patches in frozen and mountain biomes are silently replaced with regular snow blocks during world generation. No visual difference, no more hidden traps.
 - 🪣 **Powder snow is not gone** - You can still collect it the intended way: place a cauldron outside during a snowstorm and wait. It can still be placed and used as a block in survival or creative.
@@ -25,7 +30,7 @@ Your mountain biomes stay snowy and beautiful. You just stop falling through the
 
 ---
 
-## What is and isn't affected
+## ⁉️ What is and isn't affected
 
 | Source | Result |
 |---|---|
@@ -37,26 +42,31 @@ Your mountain biomes stay snowy and beautiful. You just stop falling through the
 
 ---
 
-## Installation
+## 📦 Installation
 
-1. Install [Fabric Loader](https://fabricmc.net/use/) for Minecraft.
-2. Download the latest `nomorepowder-x.x.x.jar` from [Releases](../../releases).
-3. Drop the `.jar` into your `mods/` folder.
-4. Launch the game.
+| Platform   | Link |
+|------------|------|
+| GitHub     | [Releases](https://github.com/SwordfishBE/NoMorePowder/releases) |
+| Modrinth   | [NoMorePowder](https://modrinth.com/mod/nomorepowder) |
+| CurseForge | [NoMorePowder](https://www.curseforge.com/minecraft/mc-mods/nomorepowder) |
+
+1. Download the latest JAR from your preferred platform above.
+2. Place the JAR in your server's `mods/` folder.
+3. Start Minecraft — the config file will be created automatically.
 
 > **Server note:** This mod modifies world generation. It must be installed **server-side** (or in singleplayer). Players connecting to a modded server do not need to install it themselves.
 > **Existing worlds:** Chunks that were already generated before installing this mod will not be retroactively changed. The effect only applies to newly generated chunks.
 
 ---
 
-## Compatibility
+## 🛠️ Compatibility
 
 - Java **25+**
 - Compatible with other mods - the intercept targets only `SurfaceRules$StateRule.tryApply()` and does not affect feature-based placement or structure generation
 
 ---
 
-## How it works
+## ⚠️ How it works
 
 Powder snow in frozen biomes (Frozen Peaks, Snowy Slopes, Grove, etc.) is placed via Minecraft's **surface rule system** - not via world generation features. Surface rules determine which block appears at the terrain surface for each biome, and are applied directly to each chunk column during generation, completely bypassing the feature placement pipeline.
 
@@ -66,7 +76,7 @@ Trial Chamber powder snow is placed via `StructureTemplate` (NBT-driven structur
 
 ---
 
-## Building from source
+## 🧱 Building from source
 
 ```bash
 git clone https://github.com/SwordfishBE/NoMorePowder.git
@@ -79,6 +89,6 @@ The compiled jar will be in `build/libs/`.
 
 ---
 
-## License
+## 📄 License
 
-AGPL-3.0 - see [LICENSE](LICENSE) for details.
+Released under the [AGPL-3.0 License](LICENSE).
