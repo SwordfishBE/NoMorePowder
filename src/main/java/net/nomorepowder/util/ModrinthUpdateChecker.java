@@ -15,13 +15,14 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class ModrinthUpdateChecker {
 
     private static final String PROJECT_ID = "kPiAZGSa";
-    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(5);
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .connectTimeout(REQUEST_TIMEOUT)
             .build();
@@ -52,27 +53,28 @@ public final class ModrinthUpdateChecker {
         try {
             HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                NoMorePowder.LOGGER.debug("[NoMorePowder] Update check returned HTTP {}.", response.statusCode());
+                NoMorePowder.LOGGER.debug("[{}] Update check returned HTTP {}.", NoMorePowder.modName(), response.statusCode());
                 return;
             }
 
             Optional<String> latestVersion = extractLatestVersion(response.body());
             if (latestVersion.isEmpty()) {
-                NoMorePowder.LOGGER.debug("[NoMorePowder] Update check returned no usable versions.");
+                NoMorePowder.LOGGER.debug("[{}] Update check returned no usable versions.", NoMorePowder.modName());
                 return;
             }
 
             String currentVersion = currentVersion();
             String newestVersion = latestVersion.get();
             if (isNewerVersion(newestVersion, currentVersion)) {
-                NoMorePowder.LOGGER.debug("[NoMorePowder] New version available: {} (current: {})",
+                NoMorePowder.LOGGER.info("[{}] New version available: {} (current: {})",
+                        NoMorePowder.modName(),
                         newestVersion, currentVersion);
             }
         } catch (IOException | InterruptedException e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
-            NoMorePowder.LOGGER.debug("[NoMorePowder] Update check failed.", e);
+            NoMorePowder.LOGGER.debug("[{}] Update check failed.", NoMorePowder.modName(), e);
         }
     }
 
@@ -83,7 +85,9 @@ public final class ModrinthUpdateChecker {
         }
 
         JsonArray versions = root.getAsJsonArray();
-        String fallback = null;
+        String minecraftVersion = currentMinecraftVersion();
+        VersionCandidate newestCompatibleRelease = null;
+        VersionCandidate newestRelease = null;
 
         for (JsonElement versionElement : versions) {
             if (!versionElement.isJsonObject()) {
@@ -96,17 +100,36 @@ public final class ModrinthUpdateChecker {
                 continue;
             }
 
-            String versionType = getString(versionObject, "version_type");
-            if ("release".equalsIgnoreCase(versionType)) {
-                return Optional.of(versionNumber);
+            Instant publishedAt = getPublishedAt(versionObject);
+            if (publishedAt == null) {
+                continue;
             }
 
-            if (fallback == null) {
-                fallback = versionNumber;
+            String versionType = getString(versionObject, "version_type");
+            if (!"release".equalsIgnoreCase(versionType)) {
+                continue;
+            }
+
+            VersionCandidate candidate = new VersionCandidate(versionNumber, publishedAt);
+            if (newestRelease == null || candidate.publishedAt().isAfter(newestRelease.publishedAt())) {
+                newestRelease = candidate;
+            }
+
+            boolean fabricMatch = jsonArrayContains(versionObject, "loaders", "fabric");
+            boolean minecraftMatch = minecraftVersion != null
+                    && jsonArrayContains(versionObject, "game_versions", minecraftVersion);
+            if (fabricMatch && minecraftMatch
+                    && (newestCompatibleRelease == null
+                    || candidate.publishedAt().isAfter(newestCompatibleRelease.publishedAt()))) {
+                newestCompatibleRelease = candidate;
             }
         }
 
-        return Optional.ofNullable(fallback);
+        if (newestCompatibleRelease != null) {
+            return Optional.of(newestCompatibleRelease.versionNumber());
+        }
+
+        return newestRelease == null ? Optional.empty() : Optional.of(newestRelease.versionNumber());
     }
 
     private static String getString(JsonObject object, String key) {
@@ -118,11 +141,43 @@ public final class ModrinthUpdateChecker {
         return value.getAsString();
     }
 
+    private static boolean jsonArrayContains(JsonObject object, String key, String expectedValue) {
+        JsonElement value = object.get(key);
+        if (value == null || !value.isJsonArray() || expectedValue == null || expectedValue.isBlank()) {
+            return false;
+        }
+
+        for (JsonElement element : value.getAsJsonArray()) {
+            if (!element.isJsonNull() && expectedValue.equalsIgnoreCase(element.getAsString())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static Instant getPublishedAt(JsonObject object) {
+        String publishedAt = getString(object, "date_published");
+        if (publishedAt == null || publishedAt.isBlank()) {
+            return null;
+        }
+
+        try {
+            return Instant.parse(publishedAt);
+        } catch (RuntimeException ignored) {
+            return null;
+        }
+    }
+
     private static String currentVersion() {
+        return NoMorePowder.modVersion();
+    }
+
+    private static String currentMinecraftVersion() {
         return FabricLoader.getInstance()
-                .getModContainer(NoMorePowder.MOD_ID)
+                .getModContainer("minecraft")
                 .map(container -> container.getMetadata().getVersion().getFriendlyString())
-                .orElse("unknown");
+                .orElse(null);
     }
 
     private static boolean isNewerVersion(String candidate, String current) {
@@ -130,8 +185,14 @@ public final class ModrinthUpdateChecker {
             Version candidateVersion = Version.parse(candidate);
             Version currentVersion = Version.parse(current);
             return candidateVersion.compareTo(currentVersion) > 0;
-        } catch (VersionParsingException ignored) {
-            return !candidate.equals(current);
+        } catch (VersionParsingException e) {
+            NoMorePowder.LOGGER.debug("[{}] Failed to compare versions. Candidate: {}, current: {}",
+                    NoMorePowder.modName(),
+                    candidate, current, e);
+            return false;
         }
+    }
+
+    private record VersionCandidate(String versionNumber, Instant publishedAt) {
     }
 }
