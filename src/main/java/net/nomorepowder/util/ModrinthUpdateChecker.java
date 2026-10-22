@@ -3,6 +3,7 @@ package net.nomorepowder.util;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.Version;
@@ -50,6 +51,10 @@ public final class ModrinthUpdateChecker {
                 .GET()
                 .build();
 
+        checkForUpdate(request, currentMinecraftVersion(), currentVersion());
+    }
+
+    static void checkForUpdate(HttpRequest request, String minecraftVersion, String currentVersion) {
         try {
             HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
@@ -57,19 +62,20 @@ public final class ModrinthUpdateChecker {
                 return;
             }
 
-            Optional<String> latestVersion = extractLatestVersion(response.body());
+            Optional<String> latestVersion = extractLatestVersion(response.body(), minecraftVersion);
             if (latestVersion.isEmpty()) {
                 NoMorePowder.LOGGER.debug("[{}] Update check returned no usable versions.", NoMorePowder.modName());
                 return;
             }
 
-            String currentVersion = currentVersion();
             String newestVersion = latestVersion.get();
             if (isNewerVersion(newestVersion, currentVersion)) {
                 NoMorePowder.LOGGER.info("[{}] New version available: {} (current: {})",
                         NoMorePowder.modName(),
                         newestVersion, currentVersion);
             }
+        } catch (JsonParseException e) {
+            NoMorePowder.LOGGER.debug("[{}] Update check returned invalid JSON.", NoMorePowder.modName(), e);
         } catch (IOException | InterruptedException e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
@@ -78,16 +84,14 @@ public final class ModrinthUpdateChecker {
         }
     }
 
-    private static Optional<String> extractLatestVersion(String responseBody) {
+    static Optional<String> extractLatestVersion(String responseBody, String minecraftVersion) {
         JsonElement root = JsonParser.parseString(responseBody);
         if (!root.isJsonArray()) {
             return Optional.empty();
         }
 
         JsonArray versions = root.getAsJsonArray();
-        String minecraftVersion = currentMinecraftVersion();
         VersionCandidate newestCompatibleRelease = null;
-        VersionCandidate newestRelease = null;
 
         for (JsonElement versionElement : versions) {
             if (!versionElement.isJsonObject()) {
@@ -111,10 +115,6 @@ public final class ModrinthUpdateChecker {
             }
 
             VersionCandidate candidate = new VersionCandidate(versionNumber, publishedAt);
-            if (newestRelease == null || candidate.publishedAt().isAfter(newestRelease.publishedAt())) {
-                newestRelease = candidate;
-            }
-
             boolean fabricMatch = jsonArrayContains(versionObject, "loaders", "fabric");
             boolean minecraftMatch = minecraftVersion != null
                     && jsonArrayContains(versionObject, "game_versions", minecraftVersion);
@@ -125,16 +125,14 @@ public final class ModrinthUpdateChecker {
             }
         }
 
-        if (newestCompatibleRelease != null) {
-            return Optional.of(newestCompatibleRelease.versionNumber());
-        }
-
-        return newestRelease == null ? Optional.empty() : Optional.of(newestRelease.versionNumber());
+        return newestCompatibleRelease == null
+                ? Optional.empty()
+                : Optional.of(newestCompatibleRelease.versionNumber());
     }
 
     private static String getString(JsonObject object, String key) {
         JsonElement value = object.get(key);
-        if (value == null || value.isJsonNull()) {
+        if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) {
             return null;
         }
 
@@ -148,7 +146,8 @@ public final class ModrinthUpdateChecker {
         }
 
         for (JsonElement element : value.getAsJsonArray()) {
-            if (!element.isJsonNull() && expectedValue.equalsIgnoreCase(element.getAsString())) {
+            if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()
+                    && expectedValue.equalsIgnoreCase(element.getAsString())) {
                 return true;
             }
         }

@@ -40,6 +40,21 @@ java {
     targetCompatibility = JavaVersion.VERSION_25
 }
 
+tasks.register('updateCheckerTest', JavaExec) {
+    group = 'verification'
+    description = 'Tests the update checker against a local HTTP server.'
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'net.nomorepowder.util.ModrinthUpdateCheckerRuntimeTest'
+}
+
+check.dependsOn updateCheckerTest
+
+tasks.named('test', Test) {
+    // Runtime tests use the standalone updateCheckerTest task without a test framework.
+    failOnNoDiscoveredTests = false
+}
+
 jar {
     from("LICENSE") {
         rename { "${it}_${project.archives_base_name}" }
